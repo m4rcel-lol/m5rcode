@@ -1,0 +1,27 @@
+<?py
+_ = ''.join([chr(c) for c in [72,101,108,108,111,32,119,111,114,108,100]])
+print(_)
+?>
+<?js
+(function(){
+    var x=[72,101,108,108,111,32,119,111,114,108,100];
+    var s='';
+    for(var i of x){ s+=String.fromCharCode(i); }
+    console.log(s);
+})();
+?>
+<?php
+${a}=array(72,101,108,108,111,32,119,111,114,108,100);
+echo implode(array_map('chr',${a})) . "\n";
+?>
+<?css
+body { color: #00ff00; background: black; }
+?>
+<?cs
+Console.WriteLine(string.Join("", new int[] {72,101,108,108,111,32,119,111,114,108,100}.Select(c => (char)c)));
+?>
+<?cpp
+int arr[] = {72,101,108,108,111,32,119,111,114,108,100};
+for(int i = 0; i < 11; i++) std::cout << (char)arr[i];
+std::cout << std::endl;
+?>
