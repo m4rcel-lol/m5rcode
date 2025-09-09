@@ -15,19 +15,14 @@ from commands.cmd_fastfetch import FastfetchCommand
 from commands.cmd_credits import CreditsCommand
 from commands.cmd_cd import CdCommand
 from commands.cmd_exit import ExitCommand
-from commands.cmd_wdir import WdirCommand   # NEW
-from commands.cmd_dir import DirCommand     # NEW
+from commands.cmd_wdir import WdirCommand
 
-# Initialize colorama for colored terminal output
+# Initialize colorama
 init(autoreset=True)
 
-# --- Discord RPC Configuration ---
-CLIENT_ID = '1414669512158220409' # Your Discord Application ID
+CLIENT_ID = '1414669512158220409'
 
 class M5RShell(cmd.Cmd):
-    """
-    An interactive shell for m5rcode projects with Discord Rich Presence integration.
-    """
     def __init__(self):
         super().__init__()
         self.base_dir = os.path.join(os.path.expanduser("~"), "m5rcode", "files")
@@ -38,7 +33,6 @@ class M5RShell(cmd.Cmd):
 
         self.update_prompt()
 
-        # --- Discord RPC Initialization ---
         self.rpc_active = False
         self.rpc = None
         self._connect_rpc()
@@ -46,89 +40,61 @@ class M5RShell(cmd.Cmd):
         if self.rpc_active:
             self._set_idle_presence()
 
+    # --- Discord RPC stuff ---
     def _connect_rpc(self):
-        """Attempts to connect to Discord RPC."""
         try:
             self.rpc = Presence(CLIENT_ID)
             self.rpc.connect()
             self.rpc_active = True
         except exceptions.DiscordNotFound:
-            print(Fore.YELLOW + "[RPC] Discord client not found. Rich Presence will not be active." + Style.RESET_ALL)
-            self.rpc_active = False
-            self.rpc = None
+            print(Fore.YELLOW + "[RPC] Discord not found. RPC disabled." + Style.RESET_ALL)
         except Exception as e:
-            print(Fore.RED + f"[RPC Error] Could not connect to Discord RPC: {e}" + Style.RESET_ALL)
-            self.rpc_active = False
-            self.rpc = None
+            print(Fore.RED + f"[RPC Error] {e}" + Style.RESET_ALL)
 
     def _set_idle_presence(self):
-        """Sets the RPC status to 'Using the shell'."""
         if self.rpc_active and self.rpc:
             try:
-                self.rpc.update(
-                    details="Using the shell",
-                    state="Waiting for commands...",
-                    small_image="shell",
-                    small_text="Shell (Idle)"
-                )
-            except Exception as e:
-                print(Fore.RED + f"[RPC Error] Could not update idle presence: {e}" + Style.RESET_ALL)
+                self.rpc.update(details="Using the shell",
+                                state="Waiting for commands...",
+                                small_image="shell", small_text="Shell (Idle)")
+            except Exception:
                 self.rpc_active = False
-                self.rpc = None
 
     def _set_editing_presence(self, filename):
-        """Sets the RPC status to 'Editing [filename]'."""
         if self.rpc_active and self.rpc:
             try:
-                self.rpc.update(
-                    details=f"Editing {filename}",
-                    state="In editor",
-                    small_image="shell_editing",
-                    small_text="Editing File"
-                )
-            except Exception as e:
-                print(Fore.RED + f"[RPC Error] Could not update editing presence: {e}" + Style.RESET_ALL)
+                self.rpc.update(details=f"Editing {filename}",
+                                state="In editor",
+                                small_image="shell_editing", small_text="Editing File")
+            except Exception:
                 self.rpc_active = False
-                self.rpc = None
 
     def _set_running_presence(self, command_name):
-        """Sets the RPC status to 'Running [command_name]'."""
         if self.rpc_active and self.rpc:
             try:
-                self.rpc.update(
-                    details=f"Running {command_name}",
-                    state="Executing command",
-                    small_image="shell_running",
-                    small_text="Command Running"
-                )
-            except Exception as e:
-                print(Fore.RED + f"[RPC Error] Could not update running presence: {e}" + Style.RESET_ALL)
+                self.rpc.update(details=f"Running {command_name}",
+                                state="Executing command",
+                                small_image="shell_running", small_text="Command Running")
+            except Exception:
                 self.rpc_active = False
-                self.rpc = None
 
     def _clear_presence(self):
-        """Clears the current RPC status."""
         if self.rpc_active and self.rpc:
             try:
                 self.rpc.clear()
-            except Exception as e:
-                print(Fore.RED + f"[RPC Error] Could not clear presence: {e}" + Style.RESET_ALL)
+            except Exception:
                 self.rpc_active = False
-                self.rpc = None
 
     def _close_rpc(self):
-        """Closes the Discord RPC connection."""
         if self.rpc_active and self.rpc:
             try:
                 self.rpc.close()
-            except Exception as e:
-                print(Fore.RED + f"[RPC Error] Could not close RPC: {e}" + Style.RESET_ALL)
-            finally:
-                self.rpc_active = False
-                self.rpc = None
+            except Exception:
+                pass
+            self.rpc_active = False
 
+    # --- Prompt & banners ---
     def update_prompt(self):
-        """Refresh the prompt to reflect the current working directory."""
         self.prompt = (
             Fore.CYAN
             + "╭─[" + Fore.MAGENTA + "m5rcode" + Fore.CYAN + "] "
@@ -138,13 +104,11 @@ class M5RShell(cmd.Cmd):
         )
 
     def preloop(self):
-        """Called once before the command loop starts."""
         self._print_banner()
         if self.rpc_active:
             self._set_idle_presence()
 
     def _print_banner(self):
-        """Prints the initial shell banner."""
         print(Fore.GREEN + "╔" + "═" * 50 + "╗")
         ascii_art = Figlet(font='slant')
         print(Fore.CYAN + ascii_art.renderText("m5rcode"))
@@ -152,22 +116,19 @@ class M5RShell(cmd.Cmd):
         print("╚" + "═" * 50 + "╝" + Style.RESET_ALL)
 
     def postcmd(self, stop, line):
-        """Called after a command has been executed. Resets RPC to idle state."""
         if self.rpc_active:
             self._set_idle_presence()
         return stop
 
     def emptyline(self):
-        """Do nothing on empty input line."""
         pass
 
     def default(self, line):
-        """Called when the command is not recognized."""
         print(Fore.RED + Style.BRIGHT + f"Error: Command '{line}' not found." + Style.RESET_ALL)
         print(Fore.YELLOW + "Type 'help' or '?' to see available commands." + Style.RESET_ALL)
 
+    # --- Help styling ---
     def do_help(self, arg):
-        """Displays help information for commands."""
         if arg:
             super().do_help(arg)
         else:
@@ -186,8 +147,8 @@ class M5RShell(cmd.Cmd):
 
             print(Fore.YELLOW + "\n── Navigation & Utility ──" + Style.RESET_ALL)
             self._print_command_help("cd", "Change directory within m5rcode/files")
-            self._print_command_help("dir", "List files in the current or given directory")   # NEW
-            self._print_command_help("wdir", "List directory of a website by URL")            # NEW
+            self._print_command_help("dir", "List files in the current directory")
+            self._print_command_help("wdir", "List files hosted at a website directory")
             self._print_command_help("clear", "Clear the shell output")
             self._print_command_help("exit", "Exit the m5rcode shell")
             self._print_command_help("help", "Display this help message")
@@ -198,50 +159,41 @@ class M5RShell(cmd.Cmd):
             print(Fore.LIGHTCYAN_EX + "─" * 40 + Style.RESET_ALL + "\n")
 
     def _print_command_help(self, command, description):
-        """Helper to print a single command's help in a formatted way."""
         print(f"  {Fore.GREEN}{command:<12}{Style.RESET_ALL} {Fore.WHITE}→ {description}{Style.RESET_ALL}")
 
+    # --- Commands ---
     def do_clear(self, arg):
-        """clear   → Clear the shell output"""
         os.system('cls' if os.name == 'nt' else 'clear')
         self._print_banner()
         self.update_prompt()
 
-    # ── File/project commands ────────────────────────────────────────────────
     def do_new(self, arg):
-        """new <filename>   → create a new .m5r file"""
         if self.rpc_active:
             self._set_running_presence("new file")
         NewCommand(self.cwd, arg.strip()).run()
 
     def do_nano(self, arg):
-        """nano <filename>   → edit a file with your editor"""
         filename = arg.strip()
         if self.rpc_active:
             self._set_editing_presence(filename)
         NanoCommand(self.cwd, filename).run()
 
     def do_run(self, arg):
-        """run <filename>   → run a .m5r script (executes only Python blocks)"""
         if self.rpc_active:
             self._set_running_presence(f"script {arg.strip()}")
         RunCommand(self.cwd, arg.strip()).run()
 
     def do_fastfetch(self, arg):
-        """fastfetch   → show language & system info"""
         if self.rpc_active:
             self._set_running_presence("fastfetch")
         FastfetchCommand().run()
 
     def do_credits(self, arg):
-        """credits   → show project credits"""
         if self.rpc_active:
             self._set_running_presence("credits")
         CreditsCommand().run()
 
-    # ── Navigation & exit ───────────────────────────────────────────────────
     def do_cd(self, arg):
-        """cd <directory>   → change directory within m5rcode/files"""
         if self.rpc_active:
             self._set_running_presence(f"changing directory to {arg.strip()}")
         CdCommand(self.base_dir, [self], arg).run()
@@ -249,19 +201,29 @@ class M5RShell(cmd.Cmd):
         self.update_prompt()
 
     def do_dir(self, arg):
-        """dir [path]   → list files in a directory"""
         if self.rpc_active:
-            self._set_running_presence(f"dir {arg.strip() or self.cwd}")
-        DirCommand(self.cwd, arg.strip()).run()
+            self._set_running_presence("dir")
+        try:
+            files = os.listdir(self.cwd)
+            if not files:
+                print(Fore.YELLOW + "Directory is empty." + Style.RESET_ALL)
+                return
+            print(Fore.GREEN + "\nFiles in directory:" + Style.RESET_ALL)
+            for f in files:
+                path = os.path.join(self.cwd, f)
+                if os.path.isdir(path):
+                    print(f"  {Fore.CYAN}{f}/ {Style.RESET_ALL}")
+                else:
+                    print(f"  {Fore.WHITE}{f}{Style.RESET_ALL}")
+        except Exception as e:
+            print(Fore.RED + f"[ERR] {e}" + Style.RESET_ALL)
 
     def do_wdir(self, arg):
-        """wdir <url>   → list directory of a website"""
         if self.rpc_active:
-            self._set_running_presence(f"wdir {arg.strip()}")
+            self._set_running_presence("wdir")
         WdirCommand(arg).run()
 
     def do_exit(self, arg):
-        """exit   → exit the m5rcode shell"""
         self._clear_presence()
         self._close_rpc()
         return ExitCommand().run()
