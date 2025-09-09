@@ -15,6 +15,8 @@ from commands.cmd_fastfetch import FastfetchCommand
 from commands.cmd_credits import CreditsCommand
 from commands.cmd_cd import CdCommand
 from commands.cmd_exit import ExitCommand
+from commands.cmd_wdir import WdirCommand   # NEW
+from commands.cmd_dir import DirCommand     # NEW
 
 # Initialize colorama for colored terminal output
 init(autoreset=True)
@@ -147,42 +149,28 @@ class M5RShell(cmd.Cmd):
         ascii_art = Figlet(font='slant')
         print(Fore.CYAN + ascii_art.renderText("m5rcode"))
         print(Fore.GREEN + "║ Welcome to m5rcode shell! Type help or ? to list commands.")
-        print("╚" + "═" * 50 + "╝" + Style.RESET_ALL) # Added Style.RESET_ALL here
+        print("╚" + "═" * 50 + "╝" + Style.RESET_ALL)
 
     def postcmd(self, stop, line):
-        """
-        Called after a command has been executed.
-        Resets RPC to idle state after any command completes.
-        """
+        """Called after a command has been executed. Resets RPC to idle state."""
         if self.rpc_active:
             self._set_idle_presence()
         return stop
 
-    # --- Error Handling Styling ---
     def emptyline(self):
         """Do nothing on empty input line."""
-        pass # Simply do nothing instead of repeating the last command
+        pass
 
     def default(self, line):
-        """
-        Called when the command is not recognized.
-        Prints a styled error message.
-        """
+        """Called when the command is not recognized."""
         print(Fore.RED + Style.BRIGHT + f"Error: Command '{line}' not found." + Style.RESET_ALL)
         print(Fore.YELLOW + "Type 'help' or '?' to see available commands." + Style.RESET_ALL)
 
-    # --- Help Command Styling ---
     def do_help(self, arg):
-        """
-        Displays help information for commands.
-        Type 'help' or '?' for a list of commands.
-        Type 'help <command>' for detailed help on a specific command.
-        """
+        """Displays help information for commands."""
         if arg:
-            # If an argument is provided, call the default help behavior for that command
             super().do_help(arg)
         else:
-            # Custom help output for all commands
             print("\n" + Fore.LIGHTCYAN_EX + "─" * 40)
             print(Fore.LIGHTCYAN_EX + " " * 15 + "M5R COMMANDS")
             print(Fore.LIGHTCYAN_EX + "─" * 40 + Style.RESET_ALL)
@@ -196,9 +184,11 @@ class M5RShell(cmd.Cmd):
             self._print_command_help("fastfetch", "Show language & system info")
             self._print_command_help("credits", "Show project credits")
 
-            print(Fore.YELLOW + "\n── Navigation & Utility ──" + Style.RESET_ALL) # Renamed category
+            print(Fore.YELLOW + "\n── Navigation & Utility ──" + Style.RESET_ALL)
             self._print_command_help("cd", "Change directory within m5rcode/files")
-            self._print_command_help("clear", "Clear the shell output") # Added clear to help
+            self._print_command_help("dir", "List files in the current or given directory")   # NEW
+            self._print_command_help("wdir", "List directory of a website by URL")            # NEW
+            self._print_command_help("clear", "Clear the shell output")
             self._print_command_help("exit", "Exit the m5rcode shell")
             self._print_command_help("help", "Display this help message")
             self._print_command_help("?", "Alias for 'help'")
@@ -211,15 +201,13 @@ class M5RShell(cmd.Cmd):
         """Helper to print a single command's help in a formatted way."""
         print(f"  {Fore.GREEN}{command:<12}{Style.RESET_ALL} {Fore.WHITE}→ {description}{Style.RESET_ALL}")
 
-    # --- New Clear Command ---
     def do_clear(self, arg):
         """clear   → Clear the shell output"""
         os.system('cls' if os.name == 'nt' else 'clear')
-        self._print_banner() # Re-print the banner after clearing
-        self.update_prompt() # Ensure prompt is updated and displayed
+        self._print_banner()
+        self.update_prompt()
 
-    # ── File/project commands ─────────────────────────────────────────────────
-
+    # ── File/project commands ────────────────────────────────────────────────
     def do_new(self, arg):
         """new <filename>   → create a new .m5r file"""
         if self.rpc_active:
@@ -251,8 +239,7 @@ class M5RShell(cmd.Cmd):
             self._set_running_presence("credits")
         CreditsCommand().run()
 
-    # ── Navigation & exit ────────────────────────────────────────────────────
-
+    # ── Navigation & exit ───────────────────────────────────────────────────
     def do_cd(self, arg):
         """cd <directory>   → change directory within m5rcode/files"""
         if self.rpc_active:
@@ -260,6 +247,18 @@ class M5RShell(cmd.Cmd):
         CdCommand(self.base_dir, [self], arg).run()
         os.chdir(self.cwd)
         self.update_prompt()
+
+    def do_dir(self, arg):
+        """dir [path]   → list files in a directory"""
+        if self.rpc_active:
+            self._set_running_presence(f"dir {arg.strip() or self.cwd}")
+        DirCommand(self.cwd, arg.strip()).run()
+
+    def do_wdir(self, arg):
+        """wdir <url>   → list directory of a website"""
+        if self.rpc_active:
+            self._set_running_presence(f"wdir {arg.strip()}")
+        WdirCommand(arg).run()
 
     def do_exit(self, arg):
         """exit   → exit the m5rcode shell"""
