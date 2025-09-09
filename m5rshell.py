@@ -54,27 +54,42 @@ class M5RShell(cmd.Cmd):
     def _set_idle_presence(self):
         if self.rpc_active and self.rpc:
             try:
-                self.rpc.update(details="Using the shell",
-                                state="Waiting for commands...",
-                                small_image="shell", small_text="Shell (Idle)")
+                self.rpc.update(
+                    details="Using the shell",
+                    state="Waiting for commands...",
+                    large_image="m5rcode_logo",  # big icon for all RPC updates
+                    large_text="m5rcode Shell",
+                    small_image="shell_icon",    # small icon for idle
+                    small_text="Idle"
+                )
             except Exception:
                 self.rpc_active = False
 
     def _set_editing_presence(self, filename):
         if self.rpc_active and self.rpc:
             try:
-                self.rpc.update(details=f"Editing {filename}",
-                                state="In editor",
-                                small_image="shell_editing", small_text="Editing File")
+                self.rpc.update(
+                    details=f"Editing {filename}",
+                    state="In editor",
+                    large_image="m5rcode_logo",   # big icon stays the same
+                    large_text="m5rcode Shell",
+                    small_image="editing_icon",   # small icon changes for editing
+                    small_text="Editing File"
+                )
             except Exception:
                 self.rpc_active = False
 
     def _set_running_presence(self, command_name):
         if self.rpc_active and self.rpc:
             try:
-                self.rpc.update(details=f"Running {command_name}",
-                                state="Executing command",
-                                small_image="shell_running", small_text="Command Running")
+                self.rpc.update(
+                    details=f"Running {command_name}",
+                    state="Executing command",
+                    large_image="m5rcode_logo",  # big icon stays the same
+                    large_text="m5rcode Shell",
+                    small_image="running_icon",  # small icon changes for running
+                    small_text="Command Running"
+                )
             except Exception:
                 self.rpc_active = False
 
