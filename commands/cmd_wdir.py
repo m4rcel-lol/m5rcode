@@ -34,29 +34,35 @@ class WdirCommand:
             if not href:
                 continue
 
-            # Skip parent directory and in-page anchors
-            if href.startswith("?") or href.startswith("#") or href == "../":
+            # Ignore "parent directory" or anchors
+            if href.startswith("?") or href.startswith("#") or href.startswith("../"):
                 continue
 
-            filename = href.split("/")[-1]
-            full_url = urljoin(self.url, href)
+            # Detect if it's a folder
+            is_dir = href.endswith("/")
+            filename = href.rstrip("/").split("/")[-1]
+
+            # Skip HTML/PHP/ASP/etc. pages that aren’t real hosted files
+            if not is_dir and re.search(r"\.(php|html?|asp|aspx|jsp)$", filename, re.I):
+                continue
 
             # Guess type
-            if "." in filename:
-                ext = filename.split(".")[-1].lower()
-                ftype = f".{ext} file"
-            else:
+            if is_dir:
                 ftype = "Directory"
+            elif "." in filename:
+                ftype = f".{filename.split('.')[-1]} file"
+            else:
+                ftype = "File"
 
-            # Try to extract file size and modified date from raw HTML
+            # Try to extract file size + modified date if available in listing row
             row_text = link.parent.get_text(" ", strip=True)
             size_match = re.search(r"(\d+(?:\.\d+)?\s*(?:KB|MB|GB|B))", row_text, re.I)
             date_match = re.search(r"(\d{4}-\d{2}-\d{2} \d{2}:\d{2})", row_text)
 
-            size = size_match.group(1) if size_match else "?"
-            modified = date_match.group(1) if date_match else "?"
+            size = size_match.group(1) if size_match else "-"
+            modified = date_match.group(1) if date_match else "-"
 
-            files.append((filename, ftype, size, modified, full_url))
+            files.append((filename, ftype, size, modified))
 
         if not files:
             print(Fore.YELLOW + "No files or directories found (maybe directory listing is disabled)." + Style.RESET_ALL)
@@ -66,6 +72,13 @@ class WdirCommand:
         print(Fore.MAGENTA + f"{'Name':<30}{'Type':<15}{'Size':<12}{'Modified':<20}" + Style.RESET_ALL)
         print(Fore.MAGENTA + "-" * 77 + Style.RESET_ALL)
 
-        for fname, ftype, size, modified, furl in files:
-            print(f"{Fore.CYAN}{fname:<30}{Style.RESET_ALL} "
+        for fname, ftype, size, modified in files:
+            if ftype == "Directory":
+                color = Fore.BLUE
+            elif ftype.endswith("file"):
+                color = Fore.CYAN
+            else:
+                color = Fore.WHITE
+
+            print(f"{color}{fname:<30}{Style.RESET_ALL} "
                   f"{Fore.WHITE}{ftype:<15}{size:<12}{modified:<20}{Style.RESET_ALL}")
