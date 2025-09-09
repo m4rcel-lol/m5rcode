@@ -1,38 +1,38 @@
-# m5rcode – The Unofficial Programming Language (Python)
+# m5rcode – The Unofficial Polyglot Programming Language
 
-![Python](https://img.shields.io/badge/python-3.8%2B-blue.svg)
+![Polyglot](https://img.shields.io/badge/language-Python%2FJS%2FPHP%2FC%23%2FC++-purple.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Status](https://img.shields.io/badge/status-experimental-orange.svg)
 
-**m5rcode** is an experimental, unofficial programming language written entirely in **Python**.  
-It ships with a custom **REPL shell** (`m5rshell`) and a `.m5r` **file interpreter**, so you can explore ideas interactively or run full scripts.
+**m5rcode** is an experimental **polyglot programming language** written with a blend of **Python, JavaScript, PHP, C#, and C++**.  
+It uses obfuscation and cross-language embedding to allow developers to write multi-language scripts in a single file (`.m5r`).  
+The project includes a custom **REPL shell** (`m5rshell`) and an **interpreter** for `.m5r` files.  
 
 ---
 
 ## ✨ Features
 
-- **m5rshell – The REPL Shell**  
-  Interact with m5rcode in real time using our powerful and intuitive Read–Eval–Print–Loop.
-  - Built-in commands:
-    - `new` – create a new `.m5r` script
-    - `nano` – open a script in the built-in editor
-    - `run` – execute a script
-    - `fastfetch` – display system/runtime info
-    - `credits` – show contributors & version details
-    - `exit` – leave the shell
-    - `cd` – change directories
-  - Seamless, developer-friendly CLI experience.
+- **Polyglot Language Core**
+  - Mix **Python, JavaScript, PHP, CSS, C#, and C++** in a single `.m5r` file.
+  - Interpreter extracts, executes, and blends code blocks.
+  - Supports obfuscation for added challenge and uniqueness.
 
-- **.m5r File Runner (Interpreter)**  
-  Our robust interpreter brings your `.m5r` files to life.  
-  Designed for **efficiency and clarity**, it executes scripts quickly with readable output—great for both small utilities and larger apps.
+- **m5rshell – The REPL Shell**
+  - Interactive REPL for testing code snippets.
+  - Commands:  
+    - `new`, `nano`, `run`, `fastfetch`, `credits`, `exit`, `cd`
+  - Developer-friendly CLI for creating & running `.m5r` scripts.
+
+- **.m5r File Runner (Interpreter)**
+  - Executes `.m5r` polyglot files directly.
+  - Efficient, multi-language-aware execution engine.
+  - Provides fast output even for obfuscated code.
 
 ---
 
 ## 🔧 Requirements
 
 - Python **3.8+**
-- macOS, Linux, or Windows
 
 ---
 
@@ -41,14 +41,8 @@ It ships with a custom **REPL shell** (`m5rshell`) and a `.m5r` **file interpret
 Clone this repository:
 
 ```bash
-git clone https://github.com/m5rcel/m5rcode.git
+git clone https://github.com/m4rcel-lol/m5rcode.git
 cd m5rcode
-```
-
-(If your project uses dependencies, add them to `requirements.txt`, then:)
-```bash
-# optional
-pip install -r requirements.txt
 ```
 
 ---
@@ -59,40 +53,45 @@ pip install -r requirements.txt
 ```bash
 python3 m5rshell.py
 ```
-
-Example REPL session:
-```
-m5rshell> new hello.m5r
-m5rshell> nano hello.m5r
-# (edit and save)
-m5rshell> run hello.m5r
-```
-
-### Run a `.m5r` script directly
-```bash
-python3 m5r.py examples/hello.m5r
-```
-
 ---
 
 ## 📝 Example
 
-Create `hello.m5r`:
+Here’s a `hello.m5r` script that prints **Hello world** in all supported languages:
 
 ```m5r
-# hello.m5r
-print("Hello, World from m5rcode!")
-```
+<?py
+_ = ''.join([chr(c) for c in [72,101,108,108,111,32,119,111,114,108,100]])
+print(_)
+?>
 
-Run it:
+<?js
+(function(){
+    var x=[72,101,108,108,111,32,119,111,114,108,100];
+    var s='';
+    for(var i of x){ s+=String.fromCharCode(i); }
+    console.log(s);
+})();
+?>
 
-```bash
-python3 m5r.py hello.m5r
-```
+<?php
+${a}=array(72,101,108,108,111,32,119,111,114,108,100);
+echo implode(array_map('chr',${a})) . "\n";
+?>
 
-Output:
-```
-Hello, World from m5rcode!
+<?css
+body { color: #00ff00; background: black; }
+?>
+
+<?cs
+Console.WriteLine(string.Join("", new int[] {72,101,108,108,111,32,119,111,114,108,100}.Select(c => (char)c)));
+?>
+
+<?cpp
+int arr[] = {72,101,108,108,111,32,119,111,114,108,100};
+for(int i = 0; i < 11; i++) std::cout << (char)arr[i];
+std::cout << std::endl;
+?>
 ```
 
 ---
@@ -101,49 +100,27 @@ Hello, World from m5rcode!
 
 ```
 m5rcode/
-├─ m5rshell.py         # The REPL shell (Python)
-├─ m5r.py              # The .m5r file interpreter (Python)
-├─ examples/           # Sample m5rcode scripts
-├─ docs/               # Additional documentation
+├─ m5rshell.py         # The REPL shell
+├─ m5r_interpreter.py              # The .m5r polyglot interpreter
+├─ files/           # Sample m5rcode scripts
+├─ utils/               # Handling everything
+├─ commands # Commands handling
 └─ README.md
 ```
-
----
-
-## 🧭 Roadmap (suggested)
-
-- Language spec and grammar docs
-- Standard library primitives
-- Better error messages & diagnostics
-- Packaging to PyPI (`pip install m5rcode`)
-- Editor/IDE extensions (syntax highlighting)
 
 ---
 
 ## 🤝 Contributing
 
 Contributions are welcome!  
-If you plan a larger change, open an issue first to discuss scope/design.
-
-1. Fork the repo and create a feature branch.
-2. Make your changes with clear commits.
-3. Add/update examples or docs if needed.
-4. Open a Pull Request describing your changes.
-
----
-
-## 🐛 Troubleshooting
-
-- **`python3: command not found`** – Install Python from https://python.org or use your OS package manager.
-- **Permission issues on macOS/Linux** – Use `python3 file.py` instead of making scripts executable, or `chmod +x` as needed.
-- **Windows path issues** – Use `py` launcher: `py m5rshell.py`.
+If you want to add support for more languages, open an issue or PR.
 
 ---
 
 ## 👥 Credits
 
-- **Creator:** [m5rcel](https://github.com/m5rcel)  
-- **Contributors:** Community members supporting the project
+- **Creator:** [m5rcel](https://github.com/m4rcel-lol)  
+- **Contributors:** The m5rcode community  
 
 ---
 
