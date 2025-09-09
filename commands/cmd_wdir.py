@@ -23,15 +23,30 @@ class WdirCommand:
             soup = BeautifulSoup(response.text, "html.parser")
             links = soup.find_all("a")
 
-            if not links:
-                print(Fore.YELLOW + "No directory listing or links found at this URL.")
+            files = []
+            dirs = []
+
+            for link in links:
+                href = link.get("href")
+                if not href or href.startswith("?") or href.startswith("#"):
+                    continue
+                if href in ("../", "/"):
+                    continue  # skip parent link
+                if href.endswith("/"):
+                    dirs.append(href)
+                else:
+                    files.append(href)
+
+            if not files and not dirs:
+                print(Fore.YELLOW + "No directory listing found (site may not expose files).")
                 return
 
             print(Fore.CYAN + f"Directory listing for {self.url}:\n")
-            for link in links:
-                href = link.get("href")
-                if href:
-                    print(Fore.GREEN + " - " + href)
+
+            for d in dirs:
+                print(Fore.BLUE + f"[DIR]  {d}")
+            for f in files:
+                print(Fore.GREEN + f"[FILE] {f}")
 
         except requests.exceptions.RequestException as e:
             print(Fore.RED + f"Error fetching URL: {e}")
