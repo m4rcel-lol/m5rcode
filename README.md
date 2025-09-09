@@ -105,6 +105,8 @@ m5rcode/
 ├─ files/           # Sample m5rcode scripts
 ├─ utils/               # Handling everything
 ├─ commands # Commands handling
+├─ version.txt # Version of m5rcode showing on fastfetch command
+├─ requirements.txt # Modules u need to install for m5rcode to work.
 └─ README.md
 ```
 
@@ -124,6 +126,6 @@ If you want to add support for more languages, open an issue or PR.
 
 ---
 
-## 📜 License
+## 📜 Where can I install m5rcode from?
 
-Licensed under the **MIT License**. See [LICENSE](LICENSE) for details.
+You can install m5rcode from it's official website **pythonjs.cfd** hover over and copy paste to your browser.
