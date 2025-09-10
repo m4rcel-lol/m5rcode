@@ -1,7 +1,6 @@
 # m5rcode – The Unofficial Polyglot Programming Language
 
 ![Polyglot](https://img.shields.io/badge/language-Python%2FJS%2FPHP%2FC%23%2FC++-purple.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Status](https://img.shields.io/badge/status-experimental-orange.svg)
 
 **m5rcode** is an experimental **polyglot programming language** written with a blend of **Python, JavaScript, PHP, C#, and C++**.  
