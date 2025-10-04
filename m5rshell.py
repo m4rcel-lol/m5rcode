@@ -3,6 +3,10 @@ import cmd
 from colorama import init, Fore, Style
 from pyfiglet import Figlet
 import time
+import random
+import sys
+import math
+import re
 
 # Import Discord RPC library
 from pypresence import Presence, exceptions
@@ -21,35 +25,136 @@ from commands.cmd_wdir import WdirCommand
 init(autoreset=True)
 
 CLIENT_ID = '1414669512158220409'
+BANNER_LENGTH = 70  # Unified width for all boxes/banners
+
+# -------------------- UTILITY EFFECT FUNCTIONS -------------------- #
+
+PURPLE_GRADIENT = [Fore.MAGENTA, Fore.LIGHTMAGENTA_EX, Fore.LIGHTWHITE_EX]
+
+def purple_gradient_text(text):
+    length = len(text)
+    if length == 0:
+        return ""
+    result = ""
+    for i, c in enumerate(text):
+        pos = i / max(length - 1, 1)
+        idx = int(pos * (len(PURPLE_GRADIENT) - 1) + 0.5)
+        result += PURPLE_GRADIENT[idx] + c
+    return result + Style.RESET_ALL
+
+def strip_ansi(text):
+    return re.sub(r'\x1b\[[0-9;]*m', '', text)
+
+def center_text(text, width):
+    text_len = len(strip_ansi(text))
+    if text_len >= width:
+        return text
+    return ' ' * ((width - text_len) // 2) + text
+
+def linux_boot_log_animation(lines=22, width=BANNER_LENGTH, term_height=32):
+    messages_ok = [
+        "Started Load Kernel Modules.",
+        "Mounted /boot/efi.",
+        "Started Network Manager.",
+        "Starting Authorization Manager...",
+        "Reached target Local File Systems.",
+        "Starting Hostname Service...",
+        "Started User Login Management.",
+        "Started Secure Boot.",
+        "Mounted /media.",
+        "Started Virtualization Daemon.",
+        "Starting m5rcode Engine...",
+        "Started Manage Shell Sessions.",
+        "Starting m5rcode Module Service.",
+        "Started Manage System Buses.",
+        "Started Command Dispatcher.",
+        "Started List Directory Service.",
+        "Started Python .m5r Runner.",
+        "Completed Shell Finalization.",
+        "Started Discord RPC Integration.",
+        "Started Figlet Banner.",
+        "Ready."
+    ]
+    blanks = (term_height - lines) // 2
+    os.system('cls' if os.name == 'nt' else 'clear')
+    for _ in range(blanks):
+        print('')
+    print(center_text(Fore.WHITE + Style.BRIGHT + "m5rOS (Unofficial) Shell Boot Sequence" + Style.RESET_ALL, width))
+    for i in range(lines):
+        time.sleep(0.06 if i < lines - 2 else 0.16)
+        msg = messages_ok[i] if i < len(messages_ok) else "Booting" + '.' * ((i % 5) + 1)
+        prefix = "[ OK ]"
+        color = Fore.LIGHTBLACK_EX if i % 2 == 0 else Fore.WHITE
+        print(center_text(color + prefix + ' ' + msg + Style.RESET_ALL, width))
+    print(center_text(Fore.WHITE + Style.BRIGHT + "\n>>> Boot complete." + Style.RESET_ALL, width))
+    time.sleep(0.5)
+
+def print_spinning_donut(frames=36, width=74, height=28, sleep=0.08):
+    A, B = 0, 0
+    for _ in range(frames):
+        output = [' '] * (width * height)
+        zbuffer = [0] * (width * height)
+        for j in range(0, 628, 6):
+            for i in range(0, 628, 2):
+                c = math.sin(i / 100)
+                d = math.cos(j / 100)
+                e = math.sin(A)
+                f = math.sin(j / 100)
+                g = math.cos(A)
+                h = d + 2
+                D = 1 / (c * h * e + f * g + 5)
+                l = math.cos(i / 100)
+                m = math.cos(B)
+                n = math.sin(B)
+                t = c * h * g - f * e
+                x = int(width / 2 + width / 3 * D * (l * h * m - t * n))
+                y = int(height / 2 + height / 3.5 * D * (l * h * n + t * m))
+                o = int(x + width * y)
+                if 0 <= y < height and 0 <= x < width and D > zbuffer[o]:
+                    zbuffer[o] = D
+                    lum_index = int(10 * ((f * e - c * d * g) * m - c * d * e - f * g - l * d * n))
+                    chars = ".,-~:;=!*#$@"
+                    output[o] = chars[lum_index % len(chars)]
+        os.system('cls' if os.name == 'nt' else 'clear')
+        blanks = 3
+        for _ in range(blanks):
+            print('')
+        print(center_text(Style.BRIGHT + Fore.LIGHTMAGENTA_EX + "m5rcode: Initializing..." + Style.RESET_ALL, width))
+        for y in range(height):
+            line = ''.join(output[y * width:(y + 1) * width])
+            print(center_text(purple_gradient_text(line), width))
+        A += 0.08
+        B += 0.03
+        time.sleep(sleep)
+    time.sleep(0.2)
+
+# ------------------------ SHELL CLASS ------------------------ #
 
 class M5RShell(cmd.Cmd):
+    intro = None
+
     def __init__(self):
         super().__init__()
         self.base_dir = os.path.join(os.path.expanduser("~"), "m5rcode", "files")
         os.makedirs(self.base_dir, exist_ok=True)
-
         self.cwd = self.base_dir
         os.chdir(self.cwd)
-
         self.update_prompt()
-
         self.rpc_active = False
         self.rpc = None
         self._connect_rpc()
-
         if self.rpc_active:
             self._set_idle_presence()
 
-    # --- Discord RPC stuff ---
     def _connect_rpc(self):
         try:
             self.rpc = Presence(CLIENT_ID)
             self.rpc.connect()
             self.rpc_active = True
         except exceptions.DiscordNotFound:
-            print(Fore.YELLOW + "[RPC] Discord not found. RPC disabled." + Style.RESET_ALL)
+            print(Fore.LIGHTBLACK_EX + "[RPC] Discord not found. RPC disabled." + Style.RESET_ALL)
         except Exception as e:
-            print(Fore.RED + f"[RPC Error] {e}" + Style.RESET_ALL)
+            print(Fore.LIGHTBLACK_EX + f"[RPC Error] {e}" + Style.RESET_ALL)
 
     def _set_idle_presence(self):
         if self.rpc_active and self.rpc:
@@ -57,9 +162,9 @@ class M5RShell(cmd.Cmd):
                 self.rpc.update(
                     details="Using the shell",
                     state="Waiting for commands...",
-                    large_image="m5rcode_logo",  # big icon for all RPC updates
+                    large_image="m5rcode_logo",
                     large_text="m5rcode Shell",
-                    small_image="shell_icon",    # small icon for idle
+                    small_image="shell_icon",
                     small_text="Idle"
                 )
             except Exception:
@@ -71,9 +176,9 @@ class M5RShell(cmd.Cmd):
                 self.rpc.update(
                     details=f"Editing {filename}",
                     state="In editor",
-                    large_image="m5rcode_logo",   # big icon stays the same
+                    large_image="m5rcode_logo",
                     large_text="m5rcode Shell",
-                    small_image="editing_icon",   # small icon changes for editing
+                    small_image="editing_icon",
                     small_text="Editing File"
                 )
             except Exception:
@@ -85,9 +190,9 @@ class M5RShell(cmd.Cmd):
                 self.rpc.update(
                     details=f"Running {command_name}",
                     state="Executing command",
-                    large_image="m5rcode_logo",  # big icon stays the same
+                    large_image="m5rcode_logo",
                     large_text="m5rcode Shell",
-                    small_image="running_icon",  # small icon changes for running
+                    small_image="running_icon",
                     small_text="Command Running"
                 )
             except Exception:
@@ -108,75 +213,134 @@ class M5RShell(cmd.Cmd):
                 pass
             self.rpc_active = False
 
-    # --- Prompt & banners ---
     def update_prompt(self):
+        user = os.getenv("USER") or os.getenv("USERNAME") or "user"
+        nodename = os.uname().nodename if hasattr(os, "uname") else "host"
         self.prompt = (
-            Fore.CYAN
-            + "╭─[" + Fore.MAGENTA + "m5rcode" + Fore.CYAN + "] "
-            + Fore.YELLOW + self.cwd
-            + "\n╰─> "
+            Fore.LIGHTBLUE_EX + "╭─["
+            + Fore.LIGHTMAGENTA_EX + "m5rcode"
+            + Fore.LIGHTBLUE_EX + "]"
+            + Fore.LIGHTYELLOW_EX + f"[{user}@{nodename}]"
+            + Fore.LIGHTBLUE_EX + "--["
+            + Fore.LIGHTGREEN_EX + self.cwd
+            + Fore.LIGHTBLUE_EX + "]\n"
+            + Fore.LIGHTMAGENTA_EX + "╰─❯ "
             + Style.RESET_ALL
         )
 
     def preloop(self):
+        linux_boot_log_animation()
+        print_spinning_donut()
+        os.system('cls' if os.name == 'nt' else 'clear')
         self._print_banner()
         if self.rpc_active:
             self._set_idle_presence()
 
     def _print_banner(self):
-        print(Fore.GREEN + "╔" + "═" * 50 + "╗")
+        blen = BANNER_LENGTH
         ascii_art = Figlet(font='slant')
-        print(Fore.CYAN + ascii_art.renderText("m5rcode"))
-        print(Fore.GREEN + "║ Welcome to m5rcode shell! Type help or ? to list commands.")
-        print("╚" + "═" * 50 + "╝" + Style.RESET_ALL)
+        print(Fore.LIGHTBLACK_EX + "╔" + "═" * blen + "╗")
+        for line in ascii_art.renderText("m5rcode").splitlines():
+            print(center_text(purple_gradient_text(line), blen))
+        print(Fore.LIGHTBLACK_EX + "╠" + "═" * blen + "╣")
+        print(center_text(purple_gradient_text("  Welcome to the m5rcode shell!  ".center(blen)), blen))
+        print(Fore.LIGHTBLACK_EX + "╚" + "═" * blen + "╝" + Style.RESET_ALL)
+        print(Fore.LIGHTCYAN_EX + Style.BRIGHT +
+              "Type 'help' or '?' for commands · 'exit' to quit\n" + Style.RESET_ALL)
 
     def postcmd(self, stop, line):
+        print(Fore.LIGHTBLACK_EX + Style.DIM +
+              f"· Finished: '{line.strip() or '[empty input]'}' ·" + Style.RESET_ALL)
         if self.rpc_active:
             self._set_idle_presence()
         return stop
 
     def emptyline(self):
-        pass
+        sys.stdout.write(Fore.LIGHTBLACK_EX + "· waiting ·\n" + Style.RESET_ALL)
 
     def default(self, line):
-        print(Fore.RED + Style.BRIGHT + f"Error: Command '{line}' not found." + Style.RESET_ALL)
-        print(Fore.YELLOW + "Type 'help' or '?' to see available commands." + Style.RESET_ALL)
+        print(
+            Fore.LIGHTRED_EX + Style.BRIGHT
+            + "⚠ Unknown command:"
+            + Fore.LIGHTYELLOW_EX + f" '{line}'" + Style.RESET_ALL
+        )
+        print(Fore.LIGHTMAGENTA_EX + "Type 'help' or '?' to see available commands." + Style.RESET_ALL)
 
-    # --- Help styling ---
+    # ----------- Stylized HELP command ----------- #
     def do_help(self, arg):
+        blen = BANNER_LENGTH
+        inner_width = blen - 2
+        def c(s): return "║" + s + "║"
         if arg:
             super().do_help(arg)
         else:
-            print("\n" + Fore.LIGHTCYAN_EX + "─" * 40)
-            print(Fore.LIGHTCYAN_EX + " " * 15 + "M5R COMMANDS")
-            print(Fore.LIGHTCYAN_EX + "─" * 40 + Style.RESET_ALL)
+            # Top border
+            print(Fore.LIGHTCYAN_EX + "╔" + "═" * inner_width + "╗")
 
-            print(Fore.YELLOW + "\n── File/Project Commands ──" + Style.RESET_ALL)
-            self._print_command_help("new", "Create a new .m5r file")
-            self._print_command_help("nano", "Edit a file with your editor")
-            self._print_command_help("run", "Run a .m5r script (executes only Python blocks)")
+            # ASCII art heading
+            fig = Figlet(font='standard')
+            for line in fig.renderText("M5R   HELP").splitlines():
+                if line.strip() == "": continue
+                raw = line[:inner_width]
+                pad = (inner_width - len(strip_ansi(raw))) // 2
+                out = " " * pad + purple_gradient_text(raw)
+                out = out + " " * (inner_width - len(strip_ansi(out)))
+                print(Fore.LIGHTCYAN_EX + c(out))
 
-            print(Fore.YELLOW + "\n── Information Commands ──" + Style.RESET_ALL)
-            self._print_command_help("fastfetch", "Show language & system info")
-            self._print_command_help("credits", "Show project credits")
+            print(Fore.LIGHTCYAN_EX + "╟" + "─" * inner_width + "╢" + Style.RESET_ALL)
 
-            print(Fore.YELLOW + "\n── Navigation & Utility ──" + Style.RESET_ALL)
-            self._print_command_help("cd", "Change directory within m5rcode/files")
-            self._print_command_help("dir", "List files in the current directory")
-            self._print_command_help("wdir", "List files hosted at a website directory")
-            self._print_command_help("clear", "Clear the shell output")
-            self._print_command_help("exit", "Exit the m5rcode shell")
-            self._print_command_help("help", "Display this help message")
-            self._print_command_help("?", "Alias for 'help'")
+            # Section headers and commands
+            sections = [
+                (" FILE/PROJECT ", [
+                    ("new", "Create a new .m5r file"),
+                    ("nano", "Edit a file with your editor"),
+                    ("run", "Run a .m5r script (executes only Python blocks)")
+                ]),
+                (" INFORMATION ", [
+                    ("fastfetch", "Show language & system info"),
+                    ("credits", "Show project credits"),
+                ]),
+                (" NAVIGATION & UTILITY ", [
+                    ("cd", "Change directory within m5rcode/files"),
+                    ("dir", "List files in the current directory"),
+                    ("wdir", "List files hosted at a website directory"),
+                    ("clear", "Clear the shell output"),
+                    ("exit", "Exit the m5rcode shell"),
+                    ("help", "Display this help message"),
+                    ("?", "Alias for 'help'")
+                ])
+            ]
+            for idx, (header, cmds) in enumerate(sections):
+                header_line = purple_gradient_text(header.center(inner_width))
+                print(Fore.LIGHTCYAN_EX + c(header_line))
+                for command, desc in cmds:
+                    print(self._print_command_help(command, desc, inner_width, boxed=True))
+                if idx < len(sections) - 1:
+                    print(Fore.LIGHTCYAN_EX + "╟" + "─" * inner_width + "╢" + Style.RESET_ALL)
 
-            print("\n" + Fore.LIGHTCYAN_EX + "─" * 40 + Style.RESET_ALL)
-            print(Fore.LIGHTBLACK_EX + "For detailed help on a command, type: " + Fore.CYAN + "help <command>" + Style.RESET_ALL)
-            print(Fore.LIGHTCYAN_EX + "─" * 40 + Style.RESET_ALL + "\n")
+            # Bottom border
+            print(Fore.LIGHTCYAN_EX + "╚" + "═" * inner_width + "╝" + Style.RESET_ALL)
+            # Footer
+            foot = Fore.LIGHTBLACK_EX + Style.DIM + "For details: " + Style.NORMAL + Fore.LIGHTCYAN_EX + "help <command>" + Style.RESET_ALL
+            pad = (blen - len(strip_ansi(foot))) // 2
+            print(" " * pad + foot)
+            print()
 
-    def _print_command_help(self, command, description):
-        print(f"  {Fore.GREEN}{command:<12}{Style.RESET_ALL} {Fore.WHITE}→ {description}{Style.RESET_ALL}")
+    def _print_command_help(self, command, description, inner_width=68, boxed=False):
+        left = f"{Fore.LIGHTGREEN_EX}{command:<10}{Style.RESET_ALL}"
+        arr = f"{Fore.LIGHTCYAN_EX}→{Style.RESET_ALL}"
+        desc = f"{Fore.LIGHTWHITE_EX}{description}{Style.RESET_ALL}"
+        raw = f"  {left}{arr} {desc}"
+        raw_stripped = strip_ansi(raw)
+        # pad so the visual column is even, including color codes
+        line = raw + " " * (inner_width - len(raw_stripped))
+        if boxed:
+            return Fore.LIGHTCYAN_EX + "║" + line + "║" + Style.RESET_ALL
+        else:
+            return line
 
-    # --- Commands ---
+    # ------------- Remaining commands unchanged ------------- #
+
     def do_clear(self, arg):
         os.system('cls' if os.name == 'nt' else 'clear')
         self._print_banner()
