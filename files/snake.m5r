@@ -1,234 +1,195 @@
 <?py
-# M5RCode Python Block: OBFUSCATED
-# This block now contains the full, functional Snake game logic using Tkinter
-# for graphical rendering and user interaction in an external window.
+# M5RCode Python Block: OBFUSCATED  - 3D Snake Game (Tkinter)
 
 import tkinter as _tk
 import random as _r
-import collections as _c # For deque to manage snake segments efficiently
+import collections as _c
 
-# --- Game Configuration (Obfuscated) ---
-_bW = 20 # Board Width
-_bH = 20 # Board Height
-_cS = 20 # Cell Size
-_iSL = 3 # Initial Snake Length
-_gTI = 150 # Game Tick Interval MS
+_bW=14
+_bH=14
+_cS=26
+_iSL=4
+_gTI=110
 
-class _SG: # SnakeGame
-    def __init__(self, _m): # master
-        self._m = _m
-        self._m.title(''.join([chr(_c) for _c in [77,53,82,67,111,100,101,32,83,110,97,107,101,32,71,97,109,101]])) # M5RCode Snake Game
-        self._m.resizable(False, False)
+def _iso(_x,_y):
+    _sx=(_x-_y)*_cS*0.52+_bW*_cS/2
+    _sy=((_x+_y)*0.37)*_cS*0.52+54
+    return _sx,_sy
 
-        # Frame for game (Obfuscated)
-        self._gF = _tk.Frame(self._m, bg=''.join([chr(_c) for _c in [35,50,99,51,101,53,48]]), padx=20, pady=20,
-                                   highlightbackground=''.join([chr(_c) for _c in [35,51,52,52,57,53,101]]), highlightthickness=2,
-                                   bd=0, relief=''.join([chr(_c) for _c in [102,108,97,116]])) # #2c3e50, #34495e, flat
-        self._gF.pack(expand=True, fill=''.join([chr(_c) for _c in [98,111,116,104]])) # both
+def _cube(_cv,_x,_y,_col,_head=False):
+    _ox,_oy=_iso(_x,_y)
+    _T=[(_ox,_oy),(_ox+_cS*0.5,_oy-_cS*0.33),(_ox+_cS,_oy),(_ox+_cS*0.5,_oy+_cS*0.35)]
+    _L=[(_ox,_oy),(_ox+_cS*0.5,_oy+_cS*0.35),(_ox+_cS*0.5,_oy+_cS*0.98),(_ox,_oy+_cS*0.63)]
+    _R=[(_ox+_cS,_oy),(_ox+_cS*0.5,_oy+_cS*0.35),(_ox+_cS*0.5,_oy+_cS*0.98),(_ox+_cS,_oy+_cS*0.63)]
+    _cv.create_polygon(_T,fill=_col if not _head else "#ffe257",outline="#1c2127",width=2)
+    _cv.create_polygon(_L,fill="#20c750",outline="#1c2127",width=1)
+    _cv.create_polygon(_R,fill="#147d2d",outline="#1c2127",width=1)
+    if _head:
+        _cv.create_oval(_ox+_cS*0.32,_oy+_cS*0.09,_ox+_cS*0.59,_oy+_cS*0.28,fill="#2a2d35",outline="#fff",width=1)
 
-        # Title Label (Obfuscated)
-        self._tL = _tk.Label(self._gF, text=''.join([chr(_c) for _c in [77,53,82,67,111,100,101,32,83,110,97,107,101]]),
-                                    font=(''.join([chr(_c) for _c in [73,110,116,101,114]]), 24, ''.join([chr(_c) for _c in [98,111,108,100]])), # Inter, bold
-                                    fg=''.join([chr(_c) for _c in [35,52,67,65,70,53,48]]), bg=''.join([chr(_c) for _c in [35,50,99,51,101,53,48]])) # #4CAF50, #2c3e50
-        self._tL.pack(pady=(0, 10))
+def _food3d(_cv,_x,_y):
+    _ox,_oy=_iso(_x,_y)
+    _r=_cS//2
+    _cv.create_oval(_ox+_cS*0.26-_r/2,_oy+_cS*0.16-_r/2,_ox+_cS*0.26+_r/2,_oy+_cS*0.16+_r/2,
+        fill="#ff0039",outline="#7d2034",width=2)
+    _cv.create_oval(_ox+_cS*0.28-_r/6,_oy+_cS*0.13-_r/6,_ox+_cS*0.28+_r/6,_oy+_cS*0.13+_r/6,
+        fill="#fff",outline="#fff",width=0)
 
-        # Score Display (Obfuscated)
-        self._s = 0 # score
-        self._sL = _tk.Label(self._gF, text=f"{''.join([chr(_c) for _c in [83,99,111,114,101]])}: {self._s}", # Score
-                                    font=(''.join([chr(_c) for _c in [73,110,116,101,114]]), 16, ''.join([chr(_c) for _c in [98,111,108,100]])), # Inter, bold
-                                    fg=''.join([chr(_c) for _c in [35,102,51,57,99,49,50]]), bg=''.join([chr(_c) for _c in [35,50,99,51,101,53,48]])) # #f39c12, #2c3e50
-        self._sL.pack(pady=(0, 10))
-
-        # Canvas for game drawing (Obfuscated)
-        self._c = _tk.Canvas(self._gF,
-                                width=_bW * _cS,
-                                height=_bH * _cS,
-                                bg=''.join([chr(_c) for _c in [35,50,49,50,49,50,49]]), # #212121
-                                highlightbackground=''.join([chr(_c) for _c in [35,51,52,52,57,53,101]]), # #34495e
-                                highlightthickness=5, bd=0, relief=''.join([chr(_c) for _c in [102,108,97,116]])) # flat
+class _SG:
+    def __init__(self,_m):
+        self._m=_m
+        self._m.title(''.join([chr(_c) for _c in [77,53,82,67,111,100,101,32,51,68,32,83,110,97,107,101]]))
+        self._m.resizable(False,False)
+        self._gF=_tk.Frame(self._m,bg='#22223b',padx=20,pady=15,highlightbackground="#363857",highlightthickness=2,bd=0,relief='flat')
+        self._gF.pack(expand=True,fill='both')
+        self._tL=_tk.Label(self._gF,text='M5RCode 3D Snake',font=('Inter',22,'bold'),fg='#4CAF50',bg='#22223b')
+        self._tL.pack(pady=(0,8))
+        self._s=0
+        self._sL=_tk.Label(self._gF,text=f"Score: {self._s}",font=('Inter',16,'bold'),fg='#f39c12',bg='#22223b')
+        self._sL.pack(pady=(0,8))
+        self._c=_tk.Canvas(self._gF,width=_bW*_cS+56,height=_bH*_cS+88,bg='#151526',
+            highlightbackground="#23243c",highlightthickness=5,bd=0,relief='flat')
         self._c.pack()
+        self._sn=_c.deque()
+        self._f=None
+        self._d='Right'
+        self._gO=False
+        self._gR=False
+        for _k in ['<Left>','<Right>','<Up>','<Down>','w','a','s','d']:
+            self._m.bind(_k,self._cD)
+        self._sB=_tk.Button(self._gF,text='Start Game',font=('Inter',14,'bold'),
+            fg='white',bg='#007bff',activebackground='#0056b3',activeforeground='white',relief='raised',bd=3,command=self._s_g)
+        self._sB.pack(pady=10)
+        self._r_g()
 
-        # Game state variables (Obfuscated)
-        self._sn = _c.deque() # snake
-        self._f = None # food
-        self._d = ''.join([chr(_c) for _c in [82,105,103,104,116]]) # Right
-        self._gO = False # game_over
-        self._gR = False # game_running
-
-        # Bind keys (Obfuscated)
-        self._m.bind(''.join([chr(_c) for _c in [60,76,101,102,116,62]]), self._cD) # <Left>
-        self._m.bind(''.join([chr(_c) for _c in [60,82,105,103,104,116,62]]), self._cD) # <Right>
-        self._m.bind(''.join([chr(_c) for _c in [60,85,112,62]]), self._cD) # <Up>
-        self._m.bind(''.join([chr(_c) for _c in [60,68,111,119,110,62]]), self._cD) # <Down>
-        self._m.bind('w', self._cD)
-        self._m.bind('a', self._cD)
-        self._m.bind('s', self._cD)
-        self._m.bind('d', self._cD)
-
-        # Start button (Obfuscated)
-        self._sB = _tk.Button(self._gF, text=''.join([chr(_c) for _c in [83,116,97,114,116,32,71,97,109,101]]), # Start Game
-                                      font=(''.join([chr(_c) for _c in [73,110,116,101,114]]), 14, ''.join([chr(_c) for _c in [98,111,108,100]])), # Inter, bold
-                                      fg=''.join([chr(_c) for _c in [119,104,105,116,101]]), bg=''.join([chr(_c) for _c in [35,48,48,55,98,102,102]]), # white, #007bff
-                                      activebackground=''.join([chr(_c) for _c in [35,48,48,53,54,98,51]]), activeforeground=''.join([chr(_c) for _c in [119,104,105,116,101]]), # #0056b3, white
-                                      relief=''.join([chr(_c) for _c in [114,97,105,115,101,100]]), bd=3, # raised
-                                      command=self._s_g) # start_game
-        self._sB.pack(pady=15)
-
-        self._r_g() # reset_game
-
-    def _r_g(self): # reset_game
-        """Resets the game state and redraws initial elements."""
+    def _r_g(self):
         self._sn.clear()
-        for _i in range(_iSL):
-            self._sn.appendleft((_iSL - 1 - _i, 0))
+        for _i in range(_iSL): self._sn.appendleft((_iSL-1-_i,0))
+        self._d='Right'
+        self._s=0
+        self._gO=False
+        self._sL.config(text=f"Score: {self._s}")
+        self._c.delete('all')
+        self._p_f()
+        self._d_e()
+        self._sB.config(text='Start Game',command=self._s_g)
+        self._gR=False
 
-        self._d = ''.join([chr(_c) for _c in [82,105,103,104,116]]) # Right
-        self._s = 0
-        self._gO = False
-        self._sL.config(text=f"{''.join([chr(_c) for _c in [83,99,111,114,101]])}: {self._s}") # Score
-        self._c.delete(''.join([chr(_c) for _c in [97,108,108]])) # all
-        self._p_f() # place_food
-        self._d_e() # draw_elements
-        self._sB.config(text=''.join([chr(_c) for _c in [83,116,97,114,116,32,71,97,109,101]]), command=self._s_g) # Start Game, start_game
-        self._gR = False
-
-    def _s_g(self): # start_game
-        """Starts the game loop."""
+    def _s_g(self):
         if not self._gR:
-            self._gR = True
-            self._sB.config(text=''.join([chr(_c) for _c in [82,101,115,116,97,114,116,32,71,97,109,101]]), command=self._r_g) # Restart Game, reset_game
-            self._g_l() # game_loop
+            self._gR=True
+            self._sB.config(text='Restart Game',command=self._r_g)
+            self._g_l()
 
-    def _p_f(self): # place_food
-        """Places food at a random position, ensuring it doesn't overlap with the snake."""
-        while True:
-            _x = _r.randint(0, _bW - 1)
-            _y = _r.randint(0, _bH - 1)
-            if (_x, _y) not in self._sn:
-                self._f = (_x, _y)
+    def _p_f(self):
+        while 1:
+            _x=_r.randint(0,_bW-1)
+            _y=_r.randint(0,_bH-1)
+            if (_x,_y) not in self._sn:
+                self._f=(_x,_y)
                 break
 
-    def _d_e(self): # draw_elements
-        """Draws the snake and food on the canvas."""
-        self._c.delete(''.join([chr(_c) for _c in [97,108,108]])) # all
+    def _d_e(self):
+        self._c.delete('all')
+        for _x in range(_bW):
+            for _y in range(_bH):
+                _cube(self._c,_x,_y,"#232b39")
+        if self._f: _food3d(self._c,*self._f)
+        for _i,(_x,_y) in enumerate(self._sn):
+            _cube(self._c,_x,_y,"#00ff00",_head=(_i==0))
 
-        # Draw snake (Obfuscated colors)
-        for _x, _y in self._sn:
-            self._c.create_rectangle(_x * _cS, _y * _cS,
-                                         (_x + 1) * _cS, (_y + 1) * _cS,
-                                         fill=''.join([chr(_c) for _c in [35,48,48,102,102,48,48]]), outline=''.join([chr(_c) for _c in [35,48,48,97,97,48,48]]), width=1) # #00ff00, #00aa00
-        # Draw food (Obfuscated colors)
-        if self._f:
-            _x, _y = self._f
-            self._c.create_oval(_x * _cS + _cS * 0.1, _y * _cS + _cS * 0.1,
-                                    (_x + 1) * _cS - _cS * 0.1, (_y + 1) * _cS - _cS * 0.1,
-                                    fill=''.join([chr(_c) for _c in [35,102,102,48,48,48,48]]), outline=''.join([chr(_c) for _c in [35,99,99,48,48,48,48]]), width=1) # #ff0000, #cc0000
-
-    def _cD(self, _e): # change_direction, event
-        """Changes the snake's direction based on key press."""
+    def _cD(self,_e):
         if self._gO: return
+        _k=_e.keysym
+        if _k=='Left' and self._d!='Right':self._d='Left'
+        elif _k=='Right' and self._d!='Left':self._d='Right'
+        elif _k=='Up' and self._d!='Down':self._d='Up'
+        elif _k=='Down' and self._d!='Up':self._d='Down'
+        elif _k=='a' and self._d!='Right':self._d='Left'
+        elif _k=='d' and self._d!='Left':self._d='Right'
+        elif _k=='w' and self._d!='Down':self._d='Up'
+        elif _k=='s' and self._d!='Up':self._d='Down'
 
-        _k = _e.keysym # key
-        if _k == ''.join([chr(_c) for _c in [76,101,102,116]]) and self._d != ''.join([chr(_c) for _c in [82,105,103,104,116]]): # Left, Right
-            self._d = ''.join([chr(_c) for _c in [76,101,102,116]]) # Left
-        elif _k == ''.join([chr(_c) for _c in [82,105,103,104,116]]) and self._d != ''.join([chr(_c) for _c in [76,101,102,116]]): # Right, Left
-            self._d = ''.join([chr(_c) for _c in [82,105,103,104,116]]) # Right
-        elif _k == ''.join([chr(_c) for _c in [85,112]]) and self._d != ''.join([chr(_c) for _c in [68,111,119,110]]): # Up, Down
-            self._d = ''.join([chr(_c) for _c in [85,112]]) # Up
-        elif _k == ''.join([chr(_c) for _c in [68,111,119,110]]) and self._d != ''.join([chr(_c) for _c in [85,112]]): # Down, Up
-            self._d = ''.join([chr(_c) for _c in [68,111,119,110]]) # Down
-        elif _k == 'a' and self._d != ''.join([chr(_c) for _c in [82,105,103,104,116]]): # Right
-            self._d = ''.join([chr(_c) for _c in [76,101,102,116]]) # Left
-        elif _k == 'd' and self._d != ''.join([chr(_c) for _c in [76,101,102,116]]): # Left
-            self._d = ''.join([chr(_c) for _c in [82,105,103,104,116]]) # Right
-        elif _k == 'w' and self._d != ''.join([chr(_c) for _c in [68,111,119,110]]): # Down
-            self._d = ''.join([chr(_c) for _c in [85,112]]) # Up
-        elif _k == 's' and self._d != ''.join([chr(_c) for _c in [85,112]]): # Up
-            self._d = ''.join([chr(_c) for _c in [68,111,119,110]]) # Down
-
-    def _g_l(self): # game_loop
-        """The main game loop, called repeatedly."""
+    def _g_l(self):
         if self._gO or not self._gR: return
-
-        _hX, _hY = self._sn[0] # head_x, head_y
-        _nH = (_hX, _hY) # new_head
-
-        # Calculate new head position (Obfuscated)
-        if self._d == ''.join([chr(_c) for _c in [85,112]]): _nH = (_hX, _hY - 1) # Up
-        elif self._d == ''.join([chr(_c) for _c in [68,111,119,110]]): _nH = (_hX, _hY + 1) # Down
-        elif self._d == ''.join([chr(_c) for _c in [76,101,102,116]]): _nH = (_hX - 1, _hY) # Left
-        elif self._d == ''.join([chr(_c) for _c in [82,105,103,104,116]]): _nH = (_hX + 1, _hY) # Right
-
-        # Check for collisions (Obfuscated)
-        if (_nH[0] < 0 or _nH[0] >= _bW or _nH[1] < 0 or _nH[1] >= _bH):
-            self._e_g() # end_game
-            return
-
-        if _nH in self._sn:
-            self._e_g() # end_game
-            return
-
+        _hX,_hY=self._sn[0]
+        if self._d=='Up':_nH=(_hX,_hY-1)
+        elif self._d=='Down':_nH=(_hX,_hY+1)
+        elif self._d=='Left':_nH=(_hX-1,_hY)
+        else:_nH=(_hX+1,_hY)
+        if (_nH[0]<0 or _nH[0]>=_bW or _nH[1]<0 or _nH[1]>=_bH) or _nH in self._sn:
+            self._e_g(); return
         self._sn.appendleft(_nH)
+        if _nH==self._f:
+            self._s+=1
+            self._sL.config(text=f"Score: {self._s}")
+            self._p_f()
+        else: self._sn.pop()
+        self._d_e()
+        self._m.after(_gTI,self._g_l)
 
-        # Check if food was eaten (Obfuscated)
-        if _nH == self._f:
-            self._s += 1
-            self._sL.config(text=f"{''.join([chr(_c) for _c in [83,99,111,114,101]])}: {self._s}") # Score
-            self._p_f() # place_food
-        else:
-            self._sn.pop()
+    def _e_g(self):
+        self._gO=True
+        self._gR=False
+        self._c.create_text(self._c.winfo_width()/2,self._c.winfo_height()/2,
+            text="GAME OVER!",font=('Inter',28,'bold'),fill='red')
+        print(f"<?py> Game Over! Final Score: {self._s}")
 
-        self._d_e() # draw_elements
-        self._m.after(_gTI, self._g_l) # game_loop
-
-    def _e_g(self): # end_game
-        """Ends the game and displays a game over message."""
-        self._gO = True
-        self._gR = False
-        self._c.create_text(self._c.winfo_width() / 2, self._c.winfo_height() / 2,
-                                text=''.join([chr(_c) for _c in [71,65,77,69,32,79,86,69,82,33]]), # GAME OVER!
-                                font=(''.join([chr(_c) for _c in [73,110,116,101,114]]), 30, ''.join([chr(_c) for _c in [98,111,108,100]])), # Inter, bold
-                                fill=''.join([chr(_c) for _c in [114,101,100]])) # red
-        print(f"{''.join([chr(_c) for _c in [60,63,112,121,62]])} {''.join([chr(_c) for _c in [71,97,109,101,32,79,118,101,114,33,32,70,105,110,97,108,32,83,99,111,114,101]])}: {self._s}") # <?py> Game Over! Final Score
-
-# Main Tkinter window setup (Obfuscated)
-if __name__ == '__main__':
-    _rt = _tk.Tk() # root
-    _gm = _SG(_rt) # game
+if __name__=='__main__':
+    _rt=_tk.Tk()
+    _gm=_SG(_rt)
     _rt.mainloop()
-
-print(f"{''.join([chr(_c) for _c in [60,63,112,121,62]])} {''.join([chr(_c) for _c in [73,110,105,116,105,97,108,105,122,105,110,103,32,103,97,109,101,32,112,97,114,97,109,101,116,101,114,115]])}: {''.join([chr(_c) for _c in [66,111,97,114,100]])} {_bW}x{_bH}, {''.join([chr(_c) for _c in [83,110,97,107,101,32,76,101,110,103,116,104]])} {_iSL}") # <?py> Initializing game parameters: Board {W}x{H}, Snake Length {L}
 ?>
-
 <?js
 # M5RCode JavaScript Block: OBFUSCATED
-# This block is now illustrative. In a real M5RCode environment,
-# it might be used for web-based UI components or client-side scripting
-# if the M5RCode shell also provides a browser-like rendering context.
-# The main game logic is now handled by the Python Tkinter block.
-
-(function(){var _a=''.concat([76,111,97,100,101,100,46]);var _b=''.concat([60,63,106,115,62]);console.log(_b+_a);})();
+(function(){
+  var _a=''.concat([51,68,32,83,110,97,107,101,32,74,83,32,66,108,111,99,107]); // "3D Snake JS Block"
+  var _b=''.concat([60,63,106,115,62]);
+  console.log(_b+_a);
+})();
 ?>
-
 <?php
 # M5RCode PHP Block: OBFUSCATED
-# This block is now illustrative. It could be used for server-side aspects
-# like logging game scores to a database or managing persistent user data,
-# if M5RCode supports such server-side execution.
-
-${_a}=array();function _b(${_c},${_d}){global ${_a};${_a}[]=[''.join([chr(_e) for _e in [116,105,109,101,115,116,97,109,112]])=>microtime(true),''.join([chr(_e) for _e in [101,118,101,110,116]])=>${_c},''.join([chr(_e) for _e in [100,97,116,97]])=>${_d}];}
-_b(''.join([chr(_e) for _e in [77,53,82,67,111,100,101,95,80,72,80,95,76,111,97,100,101,100]]),[''.join([chr(_e) for _e in [109,101,115,115,97,103,101]])=>''.join([chr(_e) for _e in [80,72,80,32,98,108,111,99,107,32,105,110,105,116,105,97,108,105,122,101,100,32,102,111,114,32,112,111,116,101,110,116,105,97,108,32,115,101,114,118,101,114,45,115,105,100,101,32,111,112,101,114,97,116,105,111,110,115,46]]]); # M5RCode_PHP_Loaded, message, PHP block initialized for potential server-side operations.
+${_a}=array();
+function _b(${_c},${_d}){
+  global ${_a};
+  ${_a}[]=[''.join([chr(_e) for _e in [116,105,109,101,115,116,97,109,112]])=>microtime(true),
+            ''.join([chr(_e) for _e in [101,118,101,110,116]])=>${_c},
+            ''.join([chr(_e) for _e in [100,97,116,97]])=>${_d}];
+}
+_b(''.join([chr(_e) for _e in [77,53,82,67,111,100,101,95,80,72,80,95,76,111,97,100,101,100]]),
+   [''.join([chr(_e) for _e in [109,101,115,115,97,103,101]])=>''.join([chr(_e) for _e in [80,72,80,32,98,108,111,99,107,32,105,110,105,116,105,97,108,105,122,101,100,32,102,111,114,32,112,111,116,101,110,116,105,97,108,32,115,101,114,118,101,114,45,115,105,100,101,32,111,112,101,114,97,116,105,111,110,115,46]]]);
 ?>
-
 <?css
 /* M5RCode CSS Block: OBFUSCATED */
-/* This block is now illustrative. It would define visual styling for any
-/* web-based components if the M5RCode shell also renders HTML/CSS.
-/* The Tkinter game window is styled directly within the Python code. */
-
-body{font-family:'Inter',sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);color:#e0e0e0;overflow:hidden;}
-.game-container{background-color:#2c3e50;border-radius:15px;box-shadow:0 10px 25px rgba(0,0,0,.5);padding:20px;display:flex;flex-direction:column;align-items:center;gap:15px;border:2px solid #34495e;}
+/* For Tkinter UI theme, illustrative only */
+body{font-family:'Inter',sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;
+background:linear-gradient(135deg,#1a1a2e,#161b3e,#0f3460);color:#e0e0e0;overflow:hidden;}
+.game-container{background-color:#22223b;border-radius:15px;box-shadow:0 10px 25px rgba(0,0,0,.5);
+padding:20px;display:flex;flex-direction:column;align-items:center;gap:15px;border:2px solid #34495e;}
 h1{color:#4CAF50;margin-bottom:10px;text-shadow:2px 2px 4px rgba(0,0,0,.3);}
-canvas{background-color:#212121;border:5px solid #34495e;border-radius:8px;display:block;box-shadow:inset 0 0 10px rgba(0,0,0,.5);touch-action:none;-webkit-user-select:none;-ms-user-select:none;user-select:none;}
+canvas{background-color:#181a24;border:5px solid #34495e;border-radius:8px;display:block;
+box-shadow:inset 0 0 10px rgba(0,0,0,.5);touch-action:none;-webkit-user-select:none;-ms-user-select:none;user-select:none;}
 .score-display{font-size:1.5em;font-weight:bold;color:#f39c12;text-shadow:1px 1px 2px rgba(0,0,0,.2);}
-@media (max-width:600px){.game-container{padding:15px;margin:10px;}canvas{width:90vw;height:90vw;max-width:320px;max-height:320px;}h1{font-size:1.8em;}.score-display{font-size:1.2em;}}
+@media (max-width:600px){.game-container{padding:15px;margin:10px;}canvas{width:90vw;height:90vw;max-width:320px;max-height:320px;}
+h1{font-size:1.8em;}.score-display{font-size:1.2em;}}
+?>
+<?cs
+// M5RCode C# Block: OBFUSCATED, illustrative
+using System;
+class S{
+ static void Main(){
+  Console.WriteLine("M5RCode C# Block Loaded."); 
+  // Add logic for C# if needed for server comm or UI
+ }
+}
+?>
+<?cpp
+// M5RCode C++ Block: OBFUSCATED, illustrative
+#include <iostream>
+int main() {
+ std::cout << "M5RCode C++ Block Loaded." << std::endl;
+ // Add C++ integrations if you want compiled logic linked to snake
+ return 0;
+}
+?>
