@@ -2,6 +2,7 @@
 
 ![Polyglot](https://img.shields.io/badge/language-Python%2FJS%2FPHP%2FC%23%2FC++-purple.svg)
 ![Status](https://img.shields.io/badge/status-experimental-orange.svg)
+![Windows](https://raw.githubusercontent.com/m4rcel-lol/assets/refs/heads/main/Operating_System_Windows.svg)
 
 **m5rcode** is an experimental **polyglot programming language** written with a blend of **Python, JavaScript, PHP, C#, and C++**.  
 It uses obfuscation and cross-language embedding to allow developers to write multi-language scripts in a single file (`.m5r`).  
